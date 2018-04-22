@@ -1,12 +1,9 @@
 '''
 creates a pandas dataframe from the blogs xml files. The output file is in the form of a json.
 
-python create_dataset.py <input> <output>
+python create_dataset.py <path-to-dir-containing-xml> <output-json-file-path>
 
-
-Load the json file created by using:
-    import pandas as pd
-    pd.read_json(<output>,orient='records')
+example: python create_dataset.py data/blogs/ output.json
 
 '''
 
@@ -76,14 +73,13 @@ def create_dataset(dir_path):
 
 
 if __name__ == '__main__':
-    # df = create_dataset('data/blogs')
-    # df.to_json('corpus.json',orient='records')
+
     input_path = sys.argv[1]
     output_path = sys.argv[2]
     dataset = create_dataset(input_path)
     
-    random.shuffle(dataset)
-    dataset = dataset[:10000]
+    # random.shuffle(dataset)
+    # dataset = dataset[:10000]
     with open(output_path,'w') as output_file:
         json.dump(dataset,output_file)    
 
