@@ -12,9 +12,10 @@ Load the json file created by using:
 
 import sys
 import os
-import pandas as pd
+import json
 import logging
 import traceback
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +25,24 @@ def extract_all_posts(file_path):
         text_str = str(text_str)
         start = text_str.find('<post>')
         end = text_str.find('</post>')
-        parsed = []
+        posts = []
         while end!=-1:
             start = start+6
             end = end
             post = text_str[start:end]
-            parsed.append(post)
+            posts.append(post)
             start = text_str.find('<post>',end+1)
             end = text_str.find('</post>',start)
-        parsed_text = '\n'.join(parsed)
-        parsed_text = parsed_text.strip()
-        return parsed_text
+        return posts
+
+def create_rows(posts,info):
+    
+    rows = []
+    for post in posts:
+        item = info.copy()
+        item.update({'text':post})
+        rows.append(item)
+    return rows
 
 
 
@@ -51,10 +59,11 @@ def create_dataset(dir_path):
     for file_name,file_path in file_paths.items():
         try:
             print("processing file {} at location {}".format(file_name,file_path))
-            text = extract_all_posts(file_path)
+            all_posts = extract_all_posts(file_path)
             author_id,gender,age,industry,astrological_sign,_= [f.strip() for f in file_name.split(".")]
-            row = dict(file_name=file_name,author_id=author_id, gender=gender,age=age,industry=industry, astrological_sign=astrological_sign, text=text)
-            dataset.append(row)
+            info = dict(file_name=file_name,author_id=author_id, gender=gender,age=age,industry=industry, astrological_sign=astrological_sign)
+            rows = create_rows(all_posts,info)
+            dataset.extend(rows)
             print("file {} processed".format(file_name))
             success += 1
         except Exception:
@@ -62,9 +71,7 @@ def create_dataset(dir_path):
             failed += 1
         total += 1
         print("Total {} Success {} Failed {}".format(total, success, failed))
-    dataframe = pd.DataFrame(dataset)
-    return dataframe
-
+    return dataset
 
 
 
@@ -73,9 +80,13 @@ if __name__ == '__main__':
     # df.to_json('corpus.json',orient='records')
     input_path = sys.argv[1]
     output_path = sys.argv[2]
-    df = create_dataset(input_path)
-    df.to_json(output_path,orient='records')
+    dataset = create_dataset(input_path)
     
+    random.shuffle(dataset)
+    dataset = dataset[:10000]
+    with open(output_path,'w') as output_file:
+        json.dump(dataset,output_file)    
+
 
 
 
